@@ -20,25 +20,31 @@ def check_convergence(k_means, k_medians):
 
 
 def get_centroid_positions(k_means, k_medians):
+    # Initialise 'clusters', to later store the centroid index value to the corresponding datapoint index
     clusters = np.zeros((len(dataset),1))
-
     num_datapoints = len(dataset)
 
     # loop through each datapoint
     for index in range(num_datapoints):
+        # Initialise 'distances', to store the 'distance' value from each centroid to the datapoint
         distances = np.zeros((num_centroids, 1))
+        # Loop through each centroid
         for centroid_index in range(num_centroids):
             if k_means:
-                # find the eucledian distance from the datapoint to each centroid yk
+                # for k-means, find the eucledian distance from the datapoint to each centroid
                 distance_to_centroid = euclidean_distance(dataset[index, :], centroids[centroid_index, :])
+                # update the 'distance' value to the 'distances' array
                 distances[centroid_index] = distance_to_centroid
 
             elif k_medians:
-                # find the manhattan distance from the datapoint to each centroid yk
+                # for k-medians, find the manhattan distance from the datapoint to each centroid
                 distance_to_centroid = manhattan_distance(dataset[index, :], centroids[centroid_index, :])
+                # update the 'distance' value to the 'distances' array
                 distances[centroid_index] = distance_to_centroid
+
+        # Get the closest centroids index value
         closest_centroid_index = np.argmin(distances)
-        # Assign the datapoint to the cluster Ck corresponding to the one with the lowest distance
+        # Assign the closest centroid index value to the corresponding datapoint index (in the 'clusters' array)
         clusters[index] = closest_centroid_index
 #     print(clusters)
     return clusters
@@ -66,9 +72,6 @@ if __name__ == '__main__':
 
     # convert data set to numpy array
     dataset = np.array(dataset)
-    dataset.shape
-    len(dataset)
-
 
     # choose 'k' for number of clusters 
     k=4
@@ -86,15 +89,18 @@ if __name__ == '__main__':
     # k_medians = True
 
 
-    ### update centroids
+    #### update centroids based on new cluster data
 
     for _ in range(1000):
         # if check_convergence():
         #     break
         num_centroids = k
-        clusters = get_centroid_positions(False, True)
+
+        # for the current iteration, get the centroids (index value) assigned to the corresponding datapoints index
+        clusters = get_centroid_positions(k_means, k_medians)
         data = deepcopy(dataset)
-        # print(clusters.flatten())
+
+        # Iterate over the centroids, to update them based on the updated cluster data
         for centroid_index in range(num_centroids):
             if k_means:
                 # Compute the mean of each cluster, and set them as the new centroids
@@ -102,10 +108,14 @@ if __name__ == '__main__':
             elif k_medians:
                 # Compute the median of each cluster, and set them as the new centroids
                 centroids[centroid_index] = np.median(data[clusters.flatten() == centroid_index], axis=0)
-            # print(centroids[:,:])
-            # print(data[clusters.flatten() == centroid_index])
+
     print("\nKMeans Centroids from computed for k = 4:")
     print(centroids)
+
+
+
+
+    #### ******************* IGNORE CODE BELOW ********************
 
     #### TESTING THE CODE
 
