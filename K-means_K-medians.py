@@ -1,8 +1,30 @@
 # K-mean * K-medians
 
+def get_user_choice():
+    """Gets user choice for choosing binary and multi-class perceptron, 
+    and reporting accuracies for different classes of test and train data
+    """
+    while True:
+        try:
+            print('\n\nPlease enter your choice from either 1 - 4: \n')
+            choice = input('''    1. Q3 - Plot B-cubed Precision, Recall, F-score for K-means (k = 1-9)
+    2. Q4 - Plot B-cubed Precision, Recall, F-score for K-means for l2-length normalised data (k = 1-9)
+    3. Q5 - Plot B-cubed Precision, Recall, F-score for K-medians (k = 1-9)
+    4. Q6 - Plot B-cubed Precision, Recall, F-score for K-medians for l2-length normalised data (k = 1-9)
+    5. Quit\n\n''')
+            if choice in '12345' and len(choice) == 1:
+                if choice == '5':
+                    exit()
+                return choice
+            else:
+                raise ValueError
+        except ValueError:
+            print(f"Your choice '{choice}' is invalid\n")
+
 
 def euclidean_distance(X,Y):
     # Return the Euclidean distance between X and Y
+    # return np.sqrt(np.sum((X-Y)**2))
     return np.linalg.norm(X-Y)
 
 
@@ -19,10 +41,30 @@ def check_convergence(k_means, k_medians):
     pass
 
 
-def get_centroid_positions(k_means, k_medians):
+def fit_model(k, MAX_ITER):
+    
+    num_centroids = k
+
+    # Initialise 'k' centroids (y1, .. yk) randomly from the data set
+    centroids = data[np.random.randint(data.shape[0], size=num_centroids), :]
+    print('Initial centroids\n', centroids)
+
+    for _ in range(MAX_ITER):
+        # if check_convergence():
+        #     break
+        num_centroids = k
+
+        # for the current iteration, get the centroids (index value) assigned to the corresponding datapoints index
+        clusters = group_data_to_cluster(num_centroids, centroids)
+        centroids = update_centroids(clusters, centroids)
+
+    return clusters, centroids
+
+
+def group_data_to_cluster(num_centroids, centroids):
     # Initialise 'clusters', to later store the centroid index value to the corresponding datapoint index
-    clusters = np.zeros((len(dataset),1))
-    num_datapoints = len(dataset)
+    clusters = np.zeros((len(data), 1))
+    num_datapoints = len(data)
 
     # loop through each datapoint
     for index in range(num_datapoints):
@@ -32,13 +74,13 @@ def get_centroid_positions(k_means, k_medians):
         for centroid_index in range(num_centroids):
             if k_means:
                 # for k-means, find the eucledian distance from the datapoint to each centroid
-                distance_to_centroid = euclidean_distance(dataset[index, :], centroids[centroid_index, :])
+                distance_to_centroid = euclidean_distance(data[index], centroids[centroid_index])
                 # update the 'distance' value to the 'distances' array
                 distances[centroid_index] = distance_to_centroid
 
             elif k_medians:
                 # for k-medians, find the manhattan distance from the datapoint to each centroid
-                distance_to_centroid = manhattan_distance(dataset[index, :], centroids[centroid_index, :])
+                distance_to_centroid = manhattan_distance(data[index], centroids[centroid_index])
                 # update the 'distance' value to the 'distances' array
                 distances[centroid_index] = distance_to_centroid
 
@@ -48,6 +90,51 @@ def get_centroid_positions(k_means, k_medians):
         clusters[index] = closest_centroid_index
 #     print(clusters)
     return clusters
+
+
+def update_centroids(clusters, centroids):
+    # Iterate over the centroids, to update them based on the updated cluster data
+    for centroid_index in range(len(centroids)):
+        if k_means:
+            # Compute the mean of datapoints for each cluster, and set them as the new centroids
+            centroids[centroid_index] = np.mean(data[clusters.flatten() == centroid_index], axis=0)
+        elif k_medians:
+            # Compute the median of datapoints for each cluster, and set them as the new centroids
+            centroids[centroid_index] = np.median(data[clusters.flatten() == centroid_index], axis=0)
+    return centroids
+
+
+def compute_metrics(clusters, category):
+    num_datapoints = len(data)
+    precision = np.zeros((num_datapoints))
+    recall = np.zeros((num_datapoints))
+    f_score = np.zeros((num_datapoints))
+    for index in range(num_datapoints):
+        # get the count of the 'category' from it's assigned 'cluster'
+        category_in_cluster_count = np.count_nonzero(category[clusters==clusters[index]] == category[index])
+        # get the total count of datapoints belonging to the 'category' in the dataset
+        category_total_count = np.count_nonzero(category==category[index])
+        # get the count of datapoints assigned to the 'cluster'
+        cluster_elements_count = np.count_nonzero(clusters == clusters[index])
+    #     count = np.sum(cat[clust==clust[index]]==category[index])
+        # compute precision
+        precision[index] = category_in_cluster_count / cluster_elements_count
+        recall[index] = category_in_cluster_count / category_total_count
+    #     f_score[index] = 2*precision[index]*recall[index]/(precision[index]+recall[index])
+    #     print(f'Count of category {category[index]} in cluster {clust[index]} = {category_in_cluster_count}')
+    #     print(f'Count of category {category[index]} in dataset = {category_total_count}')
+    #     print(f'Total elements in cluster {clust[index]} = {cluster_elements_count}')
+    f_score = 2*precision*recall/(precision+recall)
+    # print(precision)
+    # print(recall)
+    # print(f_score)
+    precision = np.sum(precision)/num_datapoints
+    recall = np.sum(recall)/num_datapoints
+    f_score = np.sum(f_score)/num_datapoints
+    print(precision)
+    print(recall)
+    print(f_score)
+    return precision, recall, f_score
 
 
 if __name__ == '__main__':
@@ -60,58 +147,83 @@ if __name__ == '__main__':
     # print(SEED)
     # 53, 40, 18
 
+    MAX_ITER = 1
+
     # import data
-    data1 = pd.read_csv('CA2Data/animals', header=None, delimiter=' ')
-    data2 = pd.read_csv('CA2Data/countries', header=None, delimiter=' ')
-    data3 = pd.read_csv('CA2Data/fruits', header=None, delimiter=' ')
-    data4 = pd.read_csv('CA2Data/veggies', header=None, delimiter=' ')
-    # dataset = pd.concat([data1, data2, data3, data4])
+    animals = pd.read_csv('CA2Data/animals', header=None, delimiter=' ')
+    countries = pd.read_csv('CA2Data/countries', header=None, delimiter=' ')
+    fruits = pd.read_csv('CA2Data/fruits', header=None, delimiter=' ')
+    veggies = pd.read_csv('CA2Data/veggies', header=None, delimiter=' ')
+
+    # Assign numerical 'category' values corresponding to true labels
+    animals[0] = 0
+    countries[0] = 1
+    fruits[0] = 2
+    veggies[0] = 3
 
     # concatenate data points
-    dataset = pd.concat([data1.iloc[:,1:], data2.iloc[:,1:], data3.iloc[:,1:], data4.iloc[:,1:]])
+    data = pd.concat([animals, countries, fruits, veggies], ignore_index=True)
+
+    # store category data to compute metrics
+    # category = np.array(data[0])
+    category = np.array(data[0]).reshape(-1,1)
+    # category.shape
+
+    # drop category column, before fitting data to model
+    data.drop(columns=[0], inplace=True)
+    # data
 
     # convert data set to numpy array
-    dataset = np.array(dataset)
+    data = np.array(data)
+    # data.shape
 
-    # choose 'k' for number of clusters 
-    k=4
-    num_centroids = k
+    user_choice = get_user_choice()
 
-    # Initialise 'k' centroids (y1, .. yk) randomly from the data set
-    centroids = dataset[np.random.randint(dataset.shape[0], size=num_centroids), :]
+    if user_choice == '1':
+        # Run K_means
+        k_means = True
+        k_medians = False
+        l2_len_norm = False
+        for k in range(1, 10):
+            clusters, centroids = fit_model(k, MAX_ITER)
+            precision, recall, f_score = compute_metrics(clusters, category)
 
-    # To only run K_means
-    k_means = True
-    k_medians = False
+        # plot(clusters)
 
-    # To only run K_medians
-    # k_means = False
-    # k_medians = True
 
+    elif user_choice == '2':
+        # Run K_means with l2 length normalised data
+        k_means = True
+        k_medians = False
+        l2_len_norm = True        
+        for k in range(1, 10):
+            clusters, centroids = fit_model(k, MAX_ITER)
+            precision, recall, f_score = compute_metrics(clusters, category)
+
+    elif user_choice == '3':
+        # Run K_medians
+        k_means = False
+        k_medians = True
+        l2_len_norm = False
+        for k in range(1, 10):
+            clusters, centroids = fit_model(k, MAX_ITER)
+            precision, recall, f_score = compute_metrics(clusters, category)
+
+    elif user_choice == '4':
+        # Run K_medians with l2 length normalised data
+        k_means = False
+        k_medians = True
+        l2_len_norm = True
+        for k in range(1, 10):
+            clusters, centroids = fit_model(k, MAX_ITER)
+            precision, recall, f_score = compute_metrics(clusters, category)
+
+    dataset = deepcopy(data)
 
     #### update centroids based on new cluster data
 
-    for _ in range(1000):
-        # if check_convergence():
-        #     break
-        num_centroids = k
-
-        # for the current iteration, get the centroids (index value) assigned to the corresponding datapoints index
-        clusters = get_centroid_positions(k_means, k_medians)
-        data = deepcopy(dataset)
-
-        # Iterate over the centroids, to update them based on the updated cluster data
-        for centroid_index in range(num_centroids):
-            if k_means:
-                # Compute the mean of each cluster, and set them as the new centroids
-                centroids[centroid_index] = np.mean(data[clusters.flatten() == centroid_index], axis=0)
-            elif k_medians:
-                # Compute the median of each cluster, and set them as the new centroids
-                centroids[centroid_index] = np.median(data[clusters.flatten() == centroid_index], axis=0)
-
     print("\nKMeans Centroids from computed for k = 4:")
-    print(centroids)
-
+    # print(centroids)
 
 
 
@@ -119,12 +231,12 @@ if __name__ == '__main__':
 
     #### TESTING THE CODE
 
-    from sklearn.cluster import KMeans
+    # from sklearn.cluster import KMeans
 
-    model = KMeans(n_clusters=k)
-    model.fit(data)
-    print("\n\nOutput from SKLEARN")
-    print(model.cluster_centers_)
+    # model = KMeans(n_clusters=k)
+    # model.fit(data)
+    # print("\n\nOutput from SKLEARN")
+    # print(model.cluster_centers_)
 
 
     # from pyclustering.cluster.kmedians import kmedians
@@ -139,17 +251,17 @@ if __name__ == '__main__':
 
 
 
-    # def cluster_plots(dataset, medoidInd=[], colours = 'gray', title = 'Dataset'):
+    # def cluster_plots(data, medoidInd=[], colours = 'gray', title = 'data'):
     #     fig,ax = plt.subplots()
     #     fig.set_size_inches(12, 12)
     #     ax.set_title(title,fontsize=14)
-    #     ax.set_xlim(min(dataset[:,0]), max(dataset[:,0]))
-    #     ax.set_ylim(min(dataset[:,1]), max(dataset[:,1]))
-    #     ax.scatter(dataset[:, 0], dataset[:, 1],s=8,lw=1,c= colours)
+    #     ax.set_xlim(min(data[:,0]), max(data[:,0]))
+    #     ax.set_ylim(min(data[:,1]), max(data[:,1]))
+    #     ax.scatter(data[:, 0], data[:, 1],s=8,lw=1,c= colours)
 
     #     #Plot medoids if they are given
     #     if len(medoidInd) > 0:
-    #         ax.scatter(dataset[medoidInd, 0], dataset[medoidInd, 1],s=8,lw=6,c='red')
+    #         ax.scatter(data[medoidInd, 0], data[medoidInd, 1],s=8,lw=6,c='red')
     #     fig.tight_layout()
     #     plt.show()
 
