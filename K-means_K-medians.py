@@ -53,7 +53,7 @@ def fit_model(k, MAX_ITER):
     print(f'k: {k}')
     # Initialise 'k' centroids (y1, .. yk) randomly from the data set
     centroids = data[np.random.randint(data.shape[0], size=num_centroids), :]
-    print(f'length centroids {len(centroids)}')
+    # print(f'length centroids {len(centroids)}')
     # print('Initial centroids\n', centroids[:,:5])
 
     for _ in range(MAX_ITER):
@@ -133,16 +133,16 @@ def compute_metrics(clusters, category):
     #     print(f'Count of category {category[index]} in cluster {clust[index]} = {category_in_cluster_count}')
     #     print(f'Count of category {category[index]} in dataset = {category_total_count}')
     #     print(f'Total elements in cluster {clust[index]} = {cluster_elements_count}')
-    f_score = 2*precision*recall/(precision+recall)
+    f_score = 2*precision*recall / (precision+recall)
     # print(precision)
     # print(recall)
     # print(f_score)
-    precision = np.sum(precision)/num_datapoints
-    recall = np.sum(recall)/num_datapoints
-    f_score = np.sum(f_score)/num_datapoints
-    print(precision)
-    print(recall)
-    print(f_score)
+    precision = np.round((np.sum(precision) / num_datapoints), 2)
+    recall = np.round((np.sum(recall) / num_datapoints), 2)
+    f_score = np.round((np.sum(f_score) / num_datapoints), 2)
+    print(f'precision: {precision}')
+    print(f'recall:    {recall}')
+    print(f'f_score:   {f_score}')
     return precision, recall, f_score
 
 
@@ -156,10 +156,10 @@ def plot_metrics(precisions, recalls, f_scores):
     plt.xticks(np.arange(1,K_MAX+1))
     plt.legend()
     if l2_len_norm:
-        plt.title("Metrics for {alg}\n with l2 length normalised data".format(alg="k-means" if k_means == True else "k-medians"))
+        plt.title("B-CUBED Metrics for {alg}\n with l2 length normalised data".format(alg="k-means" if k_means == True else "k-medians"))
     else:
-        plt.title("Metrics for {alg}\n without l2 length normalised data".format(alg="k-means" if k_means == True else "k-medians"));    
-
+        plt.title("B-CUBED Metrics for {alg}\n without l2 length normalised data".format(alg="k-means" if k_means == True else "k-medians"))
+    plt.show()
 
 if __name__ == '__main__':
     import pandas as pd
