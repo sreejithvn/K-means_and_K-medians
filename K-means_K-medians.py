@@ -206,62 +206,62 @@ if __name__ == '__main__':
 
     dataset = deepcopy(data)
 
-    user_choice = get_user_choice()
-
     precisions = np.zeros(K_MAX)
     recalls = np.zeros(K_MAX)
     f_scores = np.zeros(K_MAX)
     print(len(precisions))
 
+    while True:
+        user_choice = get_user_choice()
 
-    if user_choice == '1':
-        # Run K_means without l2 length normalised data
-        k_means = True
-        k_medians = False
-        l2_len_norm = False
-        if l2_len_norm:
-            data = normalise_data(data)
-        for k in range(1, K_MAX+1):
-            clusters, _ = fit_model(k, MAX_ITER)
-            precisions[k-1], recalls[k-1], f_scores[k-1] = compute_metrics(clusters, category)
-        plot_metrics(precisions, recalls, f_scores)
+        if user_choice == '1':
+            # Run K_means without l2 length normalised data
+            k_means = True
+            k_medians = False
+            l2_len_norm = False
+            if l2_len_norm:
+                data = normalise_data(data)
+            for k in range(1, K_MAX+1):
+                clusters, _ = fit_model(k, MAX_ITER)
+                precisions[k-1], recalls[k-1], f_scores[k-1] = compute_metrics(clusters, category)
+            plot_metrics(precisions, recalls, f_scores)
 
 
-    elif user_choice == '2':
-        # Run K_means with l2 length normalised data
-        k_means = True
-        k_medians = False
-        l2_len_norm = True
-        if l2_len_norm:
-            data = normalise_data(data)               
-        for k in range(1, K_MAX+1):
-            clusters, _ = fit_model(k, MAX_ITER)
-            precisions[k-1], recalls[k-1], f_scores[k-1] = compute_metrics(clusters, category)
-        plot_metrics(precisions, recalls, f_scores)
+        elif user_choice == '2':
+            # Run K_means with l2 length normalised data
+            k_means = True
+            k_medians = False
+            l2_len_norm = True
+            if l2_len_norm:
+                data = normalise_data(data)               
+            for k in range(1, K_MAX+1):
+                clusters, _ = fit_model(k, MAX_ITER)
+                precisions[k-1], recalls[k-1], f_scores[k-1] = compute_metrics(clusters, category)
+            plot_metrics(precisions, recalls, f_scores)
 
-    elif user_choice == '3':
-        # Run K_medians without l2 length normalised data
-        k_means = False
-        k_medians = True
-        l2_len_norm = False
-        if l2_len_norm:
-            data = normalise_data(data)
-        for k in range(1, K_MAX+1):
-            clusters, _ = fit_model(k, MAX_ITER)
-            precisions[k-1], recalls[k-1], f_scores[k-1] = compute_metrics(clusters, category)
-        plot_metrics(precisions, recalls, f_scores)
+        elif user_choice == '3':
+            # Run K_medians without l2 length normalised data
+            k_means = False
+            k_medians = True
+            l2_len_norm = False
+            if l2_len_norm:
+                data = normalise_data(data)
+            for k in range(1, K_MAX+1):
+                clusters, _ = fit_model(k, MAX_ITER)
+                precisions[k-1], recalls[k-1], f_scores[k-1] = compute_metrics(clusters, category)
+            plot_metrics(precisions, recalls, f_scores)
 
-    elif user_choice == '4':
-        # Run K_medians with l2 length normalised data
-        k_means = False
-        k_medians = True
-        l2_len_norm = True
-        if l2_len_norm:
-            data = normalise_data(data)
-        for k in range(1, K_MAX+1):
-            clusters, _ = fit_model(k, MAX_ITER)
-            precisions[k-1], recalls[k-1], f_scores[k-1] = compute_metrics(clusters, category)
-        plot_metrics(precisions, recalls, f_scores)
+        elif user_choice == '4':
+            # Run K_medians with l2 length normalised data
+            k_means = False
+            k_medians = True
+            l2_len_norm = True
+            if l2_len_norm:
+                data = normalise_data(data)
+            for k in range(1, K_MAX+1):
+                clusters, _ = fit_model(k, MAX_ITER)
+                precisions[k-1], recalls[k-1], f_scores[k-1] = compute_metrics(clusters, category)
+            plot_metrics(precisions, recalls, f_scores)
 
 
     #### update centroids based on new cluster data
