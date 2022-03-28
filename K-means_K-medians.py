@@ -194,24 +194,22 @@ if __name__ == '__main__':
     # store category data to compute metrics
     # category = np.array(data[0])
     category = np.array(data[0]).reshape(-1,1)
-    # category.shape
 
     # drop category column, before fitting data to model
     data.drop(columns=[0], inplace=True)
-    # data
 
     # convert data set to numpy array
-    data = np.array(data)
-    # data.shape
+    dataset = np.array(data)
 
-    dataset = deepcopy(data)
 
     precisions = np.zeros(K_MAX)
     recalls = np.zeros(K_MAX)
     f_scores = np.zeros(K_MAX)
-    print(len(precisions))
 
     while True:
+        # reset data after each user choice
+        data = deepcopy(dataset)
+
         user_choice = get_user_choice()
 
         if user_choice == '1':
@@ -266,10 +264,7 @@ if __name__ == '__main__':
 
     #### update centroids based on new cluster data
 
-    # print("\nKMeans Centroids from computed for k = 4:")
     # print(centroids)
-
-
 
     #### ******************* IGNORE CODE BELOW ********************
 
@@ -292,21 +287,5 @@ if __name__ == '__main__':
     # medians = kmedians_instance.get_medians()
     # print('median clusters', median_clusters)
     # print('pyclustering medians', medians)
-
-
-
-    # def cluster_plots(data, medoidInd=[], colours = 'gray', title = 'data'):
-    #     fig,ax = plt.subplots()
-    #     fig.set_size_inches(12, 12)
-    #     ax.set_title(title,fontsize=14)
-    #     ax.set_xlim(min(data[:,0]), max(data[:,0]))
-    #     ax.set_ylim(min(data[:,1]), max(data[:,1]))
-    #     ax.scatter(data[:, 0], data[:, 1],s=8,lw=1,c= colours)
-
-    #     #Plot medoids if they are given
-    #     if len(medoidInd) > 0:
-    #         ax.scatter(data[medoidInd, 0], data[medoidInd, 1],s=8,lw=6,c='red')
-    #     fig.tight_layout()
-    #     plt.show()
 
 
