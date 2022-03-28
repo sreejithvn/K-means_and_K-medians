@@ -22,6 +22,11 @@ def get_user_choice():
             print(f"Your choice '{choice}' is invalid\n")
 
 
+def normalise_data(data):
+    c = np.linalg.norm(data,axis=1).reshape(-1,1)
+    return (1/c)*data
+
+    
 def euclidean_distance(X,Y):
     # Return the Euclidean distance between X and Y
     # return np.sqrt(np.sum((X-Y)**2))
@@ -42,29 +47,32 @@ def check_convergence(k_means, k_medians):
 
 
 def fit_model(k, MAX_ITER):
+    np.random.seed(53)
     
     num_centroids = k
-
+    print(f'k: {k}')
     # Initialise 'k' centroids (y1, .. yk) randomly from the data set
     centroids = data[np.random.randint(data.shape[0], size=num_centroids), :]
-    print('Initial centroids\n', centroids)
+    print(f'length centroids {len(centroids)}')
+    # print('Initial centroids\n', centroids[:,:5])
 
     for _ in range(MAX_ITER):
         # if check_convergence():
         #     break
-        num_centroids = k
 
         # for the current iteration, get the centroids (index value) assigned to the corresponding datapoints index
-        clusters = group_data_to_cluster(num_centroids, centroids)
+        clusters = group_data_to_cluster(centroids)
+        # get updated centroids for current iteration
         centroids = update_centroids(clusters, centroids)
 
     return clusters, centroids
 
 
-def group_data_to_cluster(num_centroids, centroids):
-    # Initialise 'clusters', to later store the centroid index value to the corresponding datapoint index
-    clusters = np.zeros((len(data), 1))
+def group_data_to_cluster(centroids):
+    num_centroids = len(centroids)
     num_datapoints = len(data)
+    # Initialise 'clusters', to later store the centroid index value to the corresponding datapoint index
+    clusters = np.zeros((num_datapoints, 1))
 
     # loop through each datapoint
     for index in range(num_datapoints):
@@ -93,8 +101,9 @@ def group_data_to_cluster(num_centroids, centroids):
 
 
 def update_centroids(clusters, centroids):
+    num_centroids = len(centroids)
     # Iterate over the centroids, to update them based on the updated cluster data
-    for centroid_index in range(len(centroids)):
+    for centroid_index in range(num_centroids):
         if k_means:
             # Compute the mean of datapoints for each cluster, and set them as the new centroids
             centroids[centroid_index] = np.mean(data[clusters.flatten() == centroid_index], axis=0)
@@ -137,17 +146,35 @@ def compute_metrics(clusters, category):
     return precision, recall, f_score
 
 
+def plot_metrics(precisions, recalls, f_scores):
+    k_choices = np.arange(1,K_MAX+1)
+    plt.plot(k_choices, precisions, label='precision')
+    plt.plot(k_choices, recalls, label='recall')
+    plt.plot(k_choices, f_scores, label='f_score')
+    plt.xlabel('K')
+    plt.ylabel('Metrics')
+    plt.xticks(np.arange(1,K_MAX+1))
+    plt.legend()
+    if l2_len_norm:
+        plt.title("Metrics for {alg}\n with l2 length normalised data".format(alg="k-means" if k_means == True else "k-medians"))
+    else:
+        plt.title("Metrics for {alg}\n without l2 length normalised data".format(alg="k-means" if k_means == True else "k-medians"));    
+
+
 if __name__ == '__main__':
     import pandas as pd
     import numpy as np
+    import matplotlib.pyplot as plt
     from copy import deepcopy
 
-    SEED = np.random.randint(100)
-    np.random.seed(53)
+    # SEED = np.random.randint(100)
+    # np.random.seed(53)
     # print(SEED)
     # 53, 40, 18
 
     MAX_ITER = 1
+    K_MAX = 9
+
 
     # import data
     animals = pd.read_csv('CA2Data/animals', header=None, delimiter=' ')
@@ -177,52 +204,69 @@ if __name__ == '__main__':
     data = np.array(data)
     # data.shape
 
+    dataset = deepcopy(data)
+
     user_choice = get_user_choice()
 
+    precisions = np.zeros(K_MAX)
+    recalls = np.zeros(K_MAX)
+    f_scores = np.zeros(K_MAX)
+    print(len(precisions))
+
+
     if user_choice == '1':
-        # Run K_means
+        # Run K_means without l2 length normalised data
         k_means = True
         k_medians = False
         l2_len_norm = False
-        for k in range(1, 10):
-            clusters, centroids = fit_model(k, MAX_ITER)
-            precision, recall, f_score = compute_metrics(clusters, category)
-
-        # plot(clusters)
+        if l2_len_norm:
+            data = normalise_data(data)
+        for k in range(1, K_MAX+1):
+            clusters, _ = fit_model(k, MAX_ITER)
+            precisions[k-1], recalls[k-1], f_scores[k-1] = compute_metrics(clusters, category)
+        plot_metrics(precisions, recalls, f_scores)
 
 
     elif user_choice == '2':
         # Run K_means with l2 length normalised data
         k_means = True
         k_medians = False
-        l2_len_norm = True        
-        for k in range(1, 10):
-            clusters, centroids = fit_model(k, MAX_ITER)
-            precision, recall, f_score = compute_metrics(clusters, category)
+        l2_len_norm = True
+        if l2_len_norm:
+            data = normalise_data(data)               
+        for k in range(1, K_MAX+1):
+            clusters, _ = fit_model(k, MAX_ITER)
+            precisions[k-1], recalls[k-1], f_scores[k-1] = compute_metrics(clusters, category)
+        plot_metrics(precisions, recalls, f_scores)
 
     elif user_choice == '3':
-        # Run K_medians
+        # Run K_medians without l2 length normalised data
         k_means = False
         k_medians = True
         l2_len_norm = False
-        for k in range(1, 10):
-            clusters, centroids = fit_model(k, MAX_ITER)
-            precision, recall, f_score = compute_metrics(clusters, category)
+        if l2_len_norm:
+            data = normalise_data(data)
+        for k in range(1, K_MAX+1):
+            clusters, _ = fit_model(k, MAX_ITER)
+            precisions[k-1], recalls[k-1], f_scores[k-1] = compute_metrics(clusters, category)
+        plot_metrics(precisions, recalls, f_scores)
 
     elif user_choice == '4':
         # Run K_medians with l2 length normalised data
         k_means = False
         k_medians = True
         l2_len_norm = True
-        for k in range(1, 10):
-            clusters, centroids = fit_model(k, MAX_ITER)
-            precision, recall, f_score = compute_metrics(clusters, category)
+        if l2_len_norm:
+            data = normalise_data(data)
+        for k in range(1, K_MAX+1):
+            clusters, _ = fit_model(k, MAX_ITER)
+            precisions[k-1], recalls[k-1], f_scores[k-1] = compute_metrics(clusters, category)
+        plot_metrics(precisions, recalls, f_scores)
 
-    dataset = deepcopy(data)
 
     #### update centroids based on new cluster data
 
-    print("\nKMeans Centroids from computed for k = 4:")
+    # print("\nKMeans Centroids from computed for k = 4:")
     # print(centroids)
 
 
