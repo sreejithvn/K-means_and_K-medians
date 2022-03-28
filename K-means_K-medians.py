@@ -50,7 +50,7 @@ def fit_model(k, MAX_ITER):
     np.random.seed(53)
     
     num_centroids = k
-    print(f'k: {k}')
+    # print(f'k: {k}')
     # Initialise 'k' centroids (y1, .. yk) randomly from the data set
     centroids = data[np.random.randint(data.shape[0], size=num_centroids), :]
     # print(f'length centroids {len(centroids)}')
@@ -140,9 +140,9 @@ def compute_metrics(clusters, category):
     precision = np.round((np.sum(precision) / num_datapoints), 2)
     recall = np.round((np.sum(recall) / num_datapoints), 2)
     f_score = np.round((np.sum(f_score) / num_datapoints), 2)
-    print(f'precision: {precision}')
-    print(f'recall:    {recall}')
-    print(f'f_score:   {f_score}')
+    # print(f'precision: {precision}')
+    # print(f'recall:    {recall}')
+    # print(f'f_score:   {f_score}')
     return precision, recall, f_score
 
 
@@ -172,9 +172,10 @@ if __name__ == '__main__':
     # print(SEED)
     # 53, 40, 18
 
-    MAX_ITER = 1
+    MAX_ITER = 10
     K_MAX = 9
 
+    # ****** change PATH *******************
 
     # import data
     animals = pd.read_csv('CA2Data/animals', header=None, delimiter=' ')
@@ -222,6 +223,7 @@ if __name__ == '__main__':
             for k in range(1, K_MAX+1):
                 clusters, _ = fit_model(k, MAX_ITER)
                 precisions[k-1], recalls[k-1], f_scores[k-1] = compute_metrics(clusters, category)
+            print(pd.DataFrame((precisions, recalls, f_scores), index=['precision', 'recall', 'f-score'], columns=[np.arange(1,K_MAX+1)]))
             plot_metrics(precisions, recalls, f_scores)
 
 
@@ -235,6 +237,7 @@ if __name__ == '__main__':
             for k in range(1, K_MAX+1):
                 clusters, _ = fit_model(k, MAX_ITER)
                 precisions[k-1], recalls[k-1], f_scores[k-1] = compute_metrics(clusters, category)
+            print(pd.DataFrame((precisions, recalls, f_scores), index=['precision', 'recall', 'f-score'], columns=[np.arange(1,K_MAX+1)]))
             plot_metrics(precisions, recalls, f_scores)
 
         elif user_choice == '3':
@@ -247,6 +250,7 @@ if __name__ == '__main__':
             for k in range(1, K_MAX+1):
                 clusters, _ = fit_model(k, MAX_ITER)
                 precisions[k-1], recalls[k-1], f_scores[k-1] = compute_metrics(clusters, category)
+            print(pd.DataFrame((precisions, recalls, f_scores), index=['precision', 'recall', 'f-score'], columns=[np.arange(1,K_MAX+1)]))
             plot_metrics(precisions, recalls, f_scores)
 
         elif user_choice == '4':
@@ -259,6 +263,7 @@ if __name__ == '__main__':
             for k in range(1, K_MAX+1):
                 clusters, _ = fit_model(k, MAX_ITER)
                 precisions[k-1], recalls[k-1], f_scores[k-1] = compute_metrics(clusters, category)
+            print(pd.DataFrame((precisions, recalls, f_scores), index=['precision', 'recall', 'f-score'], columns=[np.arange(1,K_MAX+1)]))
             plot_metrics(precisions, recalls, f_scores)
 
 
