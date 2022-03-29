@@ -23,7 +23,7 @@ def get_user_choice():
 
 
 def normalise_data(data):
-    c = np.linalg.norm(data,axis=1).reshape(-1,1)
+    c = np.linalg.norm(data, axis=1).reshape(-1,1)
     return (1/c)*data
 
     
@@ -39,13 +39,6 @@ def manhattan_distance(X,Y):
     return np.sum(np.abs(X-Y))
 
 
-def check_convergence(k_means, k_medians):
-
-    # if k_means:
-    #     np.sum()
-    pass
-
-
 def fit_model(k, MAX_ITER):
     np.random.seed(53)
     
@@ -55,13 +48,14 @@ def fit_model(k, MAX_ITER):
     centroids = data[np.random.randint(data.shape[0], size=num_centroids), :]
     # print(f'length centroids {len(centroids)}')
     # print('Initial centroids\n', centroids[:,:5])
-
+    clusters = None
     for _ in range(MAX_ITER):
-        # if check_convergence():
-        #     break
-
+        old_clusters = clusters
         # for the current iteration, get the centroids (index value) assigned to the corresponding datapoints index
         clusters = group_data_to_cluster(centroids)
+        if np.all(old_clusters == clusters):
+            # print(f"Iteration for k={k} : {iteration}")
+            break
         # get updated centroids for current iteration
         centroids = update_centroids(clusters, centroids)
 
@@ -125,18 +119,11 @@ def compute_metrics(clusters, category):
         category_total_count = np.count_nonzero(category==category[index])
         # get the count of datapoints assigned to the 'cluster'
         cluster_elements_count = np.count_nonzero(clusters == clusters[index])
-    #     count = np.sum(cat[clust==clust[index]]==category[index])
+        # count = np.sum(cat[clust==clust[index]]==category[index])
         # compute precision
         precision[index] = category_in_cluster_count / cluster_elements_count
         recall[index] = category_in_cluster_count / category_total_count
-    #     f_score[index] = 2*precision[index]*recall[index]/(precision[index]+recall[index])
-    #     print(f'Count of category {category[index]} in cluster {clust[index]} = {category_in_cluster_count}')
-    #     print(f'Count of category {category[index]} in dataset = {category_total_count}')
-    #     print(f'Total elements in cluster {clust[index]} = {cluster_elements_count}')
     f_score = 2*precision*recall / (precision+recall)
-    # print(precision)
-    # print(recall)
-    # print(f_score)
     precision = np.round((np.sum(precision) / num_datapoints), 2)
     recall = np.round((np.sum(recall) / num_datapoints), 2)
     f_score = np.round((np.sum(f_score) / num_datapoints), 2)
@@ -161,6 +148,7 @@ def plot_metrics(precisions, recalls, f_scores):
         plt.title("B-CUBED Metrics for {alg}\n without l2 length normalised data".format(alg="k-means" if k_means == True else "k-medians"))
     plt.show()
 
+
 if __name__ == '__main__':
     import pandas as pd
     import numpy as np
@@ -172,37 +160,30 @@ if __name__ == '__main__':
     # print(SEED)
     # 53, 40, 18
 
-    MAX_ITER = 10
+    MAX_ITER = 100
     K_MAX = 9
 
-    # ****** change PATH *******************
+    # ****** CHANGE PATH *******************
 
     # import data
-    animals = pd.read_csv('CA2Data/animals', header=None, delimiter=' ')
-    countries = pd.read_csv('CA2Data/countries', header=None, delimiter=' ')
-    fruits = pd.read_csv('CA2Data/fruits', header=None, delimiter=' ')
-    veggies = pd.read_csv('CA2Data/veggies', header=None, delimiter=' ')
+    animals = pd.read_csv('CA2Data/animals', header=None, delimiter=' ').to_numpy()
+    countries = pd.read_csv('CA2Data/countries', header=None, delimiter=' ').to_numpy()
+    fruits = pd.read_csv('CA2Data/fruits', header=None, delimiter=' ').to_numpy()
+    veggies = pd.read_csv('CA2Data/veggies', header=None, delimiter=' ').to_numpy()
 
     # Assign numerical 'category' values corresponding to true labels
-    animals[0] = 0
-    countries[0] = 1
-    fruits[0] = 2
-    veggies[0] = 3
-
-    # concatenate data points
-    data = pd.concat([animals, countries, fruits, veggies], ignore_index=True)
+    animals[:,0] = 0
+    countries[:,0] = 1
+    fruits[:,0] = 2
+    veggies[:,0] = 3
 
     # store category data to compute metrics
-    # category = np.array(data[0])
-    category = np.array(data[0]).reshape(-1,1)
-
-    # drop category column, before fitting data to model
-    data.drop(columns=[0], inplace=True)
+    category = np.hstack((animals[:,0], countries[:,0], fruits[:,0], veggies[:,0])).reshape(-1,1).astype(int)
 
     # convert data set to numpy array
-    dataset = np.array(data)
+    dataset = np.vstack((animals[:,1:], countries[:,1:], fruits[:,1:], veggies[:,1:])).astype(float)
 
-
+    # initialise arrays to store B-cubed metrics for each value of 'k'
     precisions = np.zeros(K_MAX)
     recalls = np.zeros(K_MAX)
     f_scores = np.zeros(K_MAX)
@@ -218,10 +199,11 @@ if __name__ == '__main__':
             k_means = True
             k_medians = False
             l2_len_norm = False
+            data = deepcopy(dataset)
             if l2_len_norm:
                 data = normalise_data(data)
             for k in range(1, K_MAX+1):
-                clusters, _ = fit_model(k, MAX_ITER)
+                clusters, centroids = fit_model(k, MAX_ITER)
                 precisions[k-1], recalls[k-1], f_scores[k-1] = compute_metrics(clusters, category)
             print(pd.DataFrame((precisions, recalls, f_scores), index=['precision', 'recall', 'f-score'], columns=[np.arange(1,K_MAX+1)]))
             plot_metrics(precisions, recalls, f_scores)
@@ -232,10 +214,11 @@ if __name__ == '__main__':
             k_means = True
             k_medians = False
             l2_len_norm = True
+            data = deepcopy(dataset)
             if l2_len_norm:
                 data = normalise_data(data)               
             for k in range(1, K_MAX+1):
-                clusters, _ = fit_model(k, MAX_ITER)
+                clusters, centroids = fit_model(k, MAX_ITER)
                 precisions[k-1], recalls[k-1], f_scores[k-1] = compute_metrics(clusters, category)
             print(pd.DataFrame((precisions, recalls, f_scores), index=['precision', 'recall', 'f-score'], columns=[np.arange(1,K_MAX+1)]))
             plot_metrics(precisions, recalls, f_scores)
@@ -245,10 +228,11 @@ if __name__ == '__main__':
             k_means = False
             k_medians = True
             l2_len_norm = False
+            data = deepcopy(dataset)
             if l2_len_norm:
                 data = normalise_data(data)
             for k in range(1, K_MAX+1):
-                clusters, _ = fit_model(k, MAX_ITER)
+                clusters, centroids = fit_model(k, MAX_ITER)
                 precisions[k-1], recalls[k-1], f_scores[k-1] = compute_metrics(clusters, category)
             print(pd.DataFrame((precisions, recalls, f_scores), index=['precision', 'recall', 'f-score'], columns=[np.arange(1,K_MAX+1)]))
             plot_metrics(precisions, recalls, f_scores)
@@ -258,39 +242,12 @@ if __name__ == '__main__':
             k_means = False
             k_medians = True
             l2_len_norm = True
+            data = deepcopy(dataset)
             if l2_len_norm:
                 data = normalise_data(data)
             for k in range(1, K_MAX+1):
-                clusters, _ = fit_model(k, MAX_ITER)
+                clusters, centroids = fit_model(k, MAX_ITER)
                 precisions[k-1], recalls[k-1], f_scores[k-1] = compute_metrics(clusters, category)
             print(pd.DataFrame((precisions, recalls, f_scores), index=['precision', 'recall', 'f-score'], columns=[np.arange(1,K_MAX+1)]))
             plot_metrics(precisions, recalls, f_scores)
-
-
-    #### update centroids based on new cluster data
-
-    # print(centroids)
-
-    #### ******************* IGNORE CODE BELOW ********************
-
-    #### TESTING THE CODE
-
-    # from sklearn.cluster import KMeans
-
-    # model = KMeans(n_clusters=k)
-    # model.fit(data)
-    # print("\n\nOutput from SKLEARN")
-    # print(model.cluster_centers_)
-
-
-    # from pyclustering.cluster.kmedians import kmedians
-    
-    # # Create instance of K-Medians algorithm.
-    # kmedians_instance = kmedians(data, centroids)
-    # kmedians_instance.process()
-    # median_clusters = kmedians_instance.get_clusters()
-    # medians = kmedians_instance.get_medians()
-    # print('median clusters', median_clusters)
-    # print('pyclustering medians', medians)
-
 
