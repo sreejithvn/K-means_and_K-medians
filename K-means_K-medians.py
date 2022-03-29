@@ -142,6 +142,12 @@ def plot_metrics(precisions, recalls, f_scores):
     plt.ylabel('Metrics')
     plt.xticks(np.arange(1,K_MAX+1))
     plt.legend()
+    for i,j in zip(k_choices, precisions):
+        plt.annotate(str(j), xy=(i,j))
+    for i,j in zip(k_choices, recalls):
+        plt.annotate(str(j), xy=(i,j))
+    for i,j in zip(k_choices, f_scores):
+        plt.annotate(str(j), xy=(i,j))
     if l2_len_norm:
         plt.title("B-CUBED Metrics for {alg}\n with l2 length normalised data".format(alg="k-means" if k_means == True else "k-medians"))
     else:
