@@ -29,13 +29,12 @@ def normalise_data(data):
     
 def euclidean_distance(X,Y):
     # Return the Euclidean distance between X and Y
-    # return np.sqrt(np.sum((X-Y)**2))
-    return np.linalg.norm(X-Y)
+    # return np.linalg.norm(X-Y)    
+    return np.sum((X-Y)**2)
 
 
 def manhattan_distance(X,Y):
     # Return the Manhattan distance between X and Y
-    # return np.abs(X-Y).sum()
     return np.sum(np.abs(X-Y))
 
 
@@ -72,7 +71,7 @@ def group_data_to_cluster(centroids):
     for index in range(num_datapoints):
         # Initialise 'distances', to store the 'distance' value from each centroid to the datapoint
         distances = np.zeros((num_centroids, 1))
-        # Loop through each centroid
+        # loop through each centroid
         for centroid_index in range(num_centroids):
             if k_means:
                 # for k-means, find the eucledian distance from the datapoint to each centroid
@@ -90,7 +89,7 @@ def group_data_to_cluster(centroids):
         closest_centroid_index = np.argmin(distances)
         # Assign the closest centroid index value to the corresponding datapoint index (in the 'clusters' array)
         clusters[index] = closest_centroid_index
-#     print(clusters)
+
     return clusters
 
 
@@ -104,6 +103,7 @@ def update_centroids(clusters, centroids):
         elif k_medians:
             # Compute the median of datapoints for each cluster, and set them as the new centroids
             centroids[centroid_index] = np.median(data[clusters.flatten() == centroid_index], axis=0)
+
     return centroids
 
 
@@ -119,7 +119,6 @@ def compute_metrics(clusters, category):
         category_total_count = np.count_nonzero(category==category[index])
         # get the count of datapoints assigned to the 'cluster'
         cluster_elements_count = np.count_nonzero(clusters == clusters[index])
-        # count = np.sum(cat[clust==clust[index]]==category[index])
         # compute precision
         precision[index] = category_in_cluster_count / cluster_elements_count
         recall[index] = category_in_cluster_count / category_total_count
@@ -256,4 +255,3 @@ if __name__ == '__main__':
                 precisions[k-1], recalls[k-1], f_scores[k-1] = compute_metrics(clusters, category)
             print(pd.DataFrame((precisions, recalls, f_scores), index=['precision', 'recall', 'f-score'], columns=[np.arange(1,K_MAX+1)]))
             plot_metrics(precisions, recalls, f_scores)
-
