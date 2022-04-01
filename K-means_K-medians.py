@@ -45,15 +45,16 @@ def fit_model(k, MAX_ITER):
     # print(f'k: {k}')
     # Initialise 'k' centroids (y1, .. yk) randomly from the data set
     centroids = data[np.random.randint(data.shape[0], size=num_centroids), :]
-    # print(f'length centroids {len(centroids)}')
-    # print('Initial centroids\n', centroids[:,:5])
+    # initialise 'clusters' to None
     clusters = None
+    # iterate to update the centroids, and group the datapoints into clusters, until convergence.
     for _ in range(MAX_ITER):
+        # store clusters in 'old_clusters', to later check for convergence of clusters after updation
         old_clusters = clusters
         # for the current iteration, get the centroids (index value) assigned to the corresponding datapoints index
         clusters = group_data_to_cluster(centroids)
+        # check for convergence, and exit if there is no change in assigned datapoints to each cluster
         if np.all(old_clusters == clusters):
-            # print(f"Iteration for k={k} : {iteration}")
             break
         # get updated centroids for current iteration
         centroids = update_centroids(clusters, centroids)
@@ -74,7 +75,7 @@ def group_data_to_cluster(centroids):
         # loop through each centroid
         for centroid_index in range(num_centroids):
             if k_means:
-                # for k-means, find the eucledian distance from the datapoint to each centroid
+                # for k-means, find the 'squared' eucledian distance from the datapoint to each centroid
                 distance_to_centroid = euclidean_distance(data[index], centroids[centroid_index])
                 # update the 'distance' value to the 'distances' array
                 distances[centroid_index] = distance_to_centroid
@@ -109,26 +110,29 @@ def update_centroids(clusters, centroids):
 
 def compute_metrics(clusters, category):
     num_datapoints = len(data)
+    # initialise arrays for storing B-cubed metrics for each datapoint
     precision = np.zeros((num_datapoints))
     recall = np.zeros((num_datapoints))
     f_score = np.zeros((num_datapoints))
+    # iterate over each datapoint, and compute it's individual B-cubed scores
     for index in range(num_datapoints):
-        # get the count of the 'category' from it's assigned 'cluster'
+        # get the count of the 'category' from it's assigned 'cluster', corresponding to this datapoint
         category_in_cluster_count = np.count_nonzero(category[clusters==clusters[index]] == category[index])
-        # get the total count of datapoints belonging to the 'category' in the dataset
+        # get the total count of datapoints belonging to the 'category' (true label), corresponding to this datapoint, in the dataset
         category_total_count = np.count_nonzero(category==category[index])
-        # get the count of datapoints assigned to the 'cluster'
+        # get the count of datapoints assigned to the 'cluster', to which this datapoint belongs
         cluster_elements_count = np.count_nonzero(clusters == clusters[index])
-        # compute precision
+        # compute precision for this datapoint
         precision[index] = category_in_cluster_count / cluster_elements_count
+        # compute recall for this datapoint
         recall[index] = category_in_cluster_count / category_total_count
+    # compute f_score's for the each datapoints in the data set
     f_score = 2*precision*recall / (precision+recall)
+    # compute overall scores for the entire dataset, for the corresponding 'k' chosen
     precision = np.round((np.sum(precision) / num_datapoints), 2)
     recall = np.round((np.sum(recall) / num_datapoints), 2)
     f_score = np.round((np.sum(f_score) / num_datapoints), 2)
-    # print(f'precision: {precision}')
-    # print(f'recall:    {recall}')
-    # print(f'f_score:   {f_score}')
+
     return precision, recall, f_score
 
 
@@ -141,6 +145,7 @@ def plot_metrics(precisions, recalls, f_scores):
     plt.ylabel('Metrics')
     plt.xticks(np.arange(1,K_MAX+1))
     plt.legend()
+    # Add annotations to the plot
     for i,j in zip(k_choices, precisions):
         plt.annotate(str(j), xy=(i,j))
     for i,j in zip(k_choices, recalls):
@@ -155,6 +160,7 @@ def plot_metrics(precisions, recalls, f_scores):
 
 
 if __name__ == '__main__':
+    # import the necessary libraries
     import pandas as pd
     import numpy as np
     import matplotlib.pyplot as plt
@@ -170,7 +176,7 @@ if __name__ == '__main__':
 
     # ****** CHANGE PATH *******************
 
-    # import data
+    # import data and convert them to numpy arrays
     animals = pd.read_csv('CA2Data/animals', header=None, delimiter=' ').to_numpy()
     countries = pd.read_csv('CA2Data/countries', header=None, delimiter=' ').to_numpy()
     fruits = pd.read_csv('CA2Data/fruits', header=None, delimiter=' ').to_numpy()
@@ -182,13 +188,13 @@ if __name__ == '__main__':
     fruits[:,0] = 2
     veggies[:,0] = 3
 
-    # store category data to compute metrics
+    # store category data to compute B-cubed metrics
     category = np.hstack((animals[:,0], countries[:,0], fruits[:,0], veggies[:,0])).reshape(-1,1).astype(int)
 
     # convert data set to numpy array
     dataset = np.vstack((animals[:,1:], countries[:,1:], fruits[:,1:], veggies[:,1:])).astype(float)
 
-    # initialise arrays to store B-cubed metrics for each value of 'k'
+    # initialise arrays to store B-cubed metrics for each value of 'k' (cluster count)
     precisions = np.zeros(K_MAX)
     recalls = np.zeros(K_MAX)
     f_scores = np.zeros(K_MAX)
@@ -197,6 +203,7 @@ if __name__ == '__main__':
         # reset data after each user choice
         data = deepcopy(dataset)
 
+        # get user choice to select the clustering algorithm, and l2 length normalisation choice
         user_choice = get_user_choice()
 
         if user_choice == '1':
@@ -204,7 +211,7 @@ if __name__ == '__main__':
             k_means = True
             k_medians = False
             l2_len_norm = False
-            data = deepcopy(dataset)
+            # Check if l2 length normalisation required
             if l2_len_norm:
                 data = normalise_data(data)
             for k in range(1, K_MAX+1):
@@ -219,7 +226,7 @@ if __name__ == '__main__':
             k_means = True
             k_medians = False
             l2_len_norm = True
-            data = deepcopy(dataset)
+            # Check if l2 length normalisation required
             if l2_len_norm:
                 data = normalise_data(data)               
             for k in range(1, K_MAX+1):
@@ -233,7 +240,7 @@ if __name__ == '__main__':
             k_means = False
             k_medians = True
             l2_len_norm = False
-            data = deepcopy(dataset)
+            # Check if l2 length normalisation required
             if l2_len_norm:
                 data = normalise_data(data)
             for k in range(1, K_MAX+1):
@@ -247,7 +254,7 @@ if __name__ == '__main__':
             k_means = False
             k_medians = True
             l2_len_norm = True
-            data = deepcopy(dataset)
+            # Check if l2 length normalisation required
             if l2_len_norm:
                 data = normalise_data(data)
             for k in range(1, K_MAX+1):
