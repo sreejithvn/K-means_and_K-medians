@@ -1,12 +1,13 @@
-# K-mean * K-medians
+
+"""K-mean and K-medians clustering algorithms"""
+
 
 def get_user_choice():
-    """Gets user choice for choosing binary and multi-class perceptron, 
-    and reporting accuracies for different classes of test and train data
+    """Gets user choice for selecting clustering algorithm and enabling l2 length data normalisation
     """
     while True:
         try:
-            print('\n\nPlease enter your choice from either 1 - 4: \n')
+            print('\n\nPlease enter your choice from either 1 - 5: \n')
             choice = input('''    1. Q3 - Plot B-cubed Precision, Recall, F-score for K-means (k = 1-9)
     2. Q4 - Plot B-cubed Precision, Recall, F-score for K-means for l2-length normalised data (k = 1-9)
     3. Q5 - Plot B-cubed Precision, Recall, F-score for K-medians (k = 1-9)
@@ -23,26 +24,66 @@ def get_user_choice():
 
 
 def normalise_data(data):
+    """Function to normalise each data point to unit l2 length
+
+    Args:
+        data (numpy array): dataset to be normalised
+
+    Returns:
+        numpy array: l2 length normalised data
+    """
+    # compute the length of each datapoint (vector)
     c = np.linalg.norm(data, axis=1).reshape(-1,1)
+    # return l2 length normalised (to unit length) data
     return (1/c)*data
 
     
 def euclidean_distance(X,Y):
-    # Return the Euclidean distance between X and Y
-    # return np.linalg.norm(X-Y)    
+    """Compute squared euclidean distance between the vectors, X and Y
+
+    Args:
+        X (numpy array): data point as 1D numpy array
+        Y (numpy array): centroid as 1D numpy array
+
+    Returns:
+        float: squared euclidean distance
+    """
+    # Return the squared Euclidean distance between X and Y
     return np.sum((X-Y)**2)
 
 
 def manhattan_distance(X,Y):
+    """Compute manhattan distance between the vectors, X and Y
+
+    Args:
+        X (numpy array): data point as 1D numpy array
+        Y (numpy array): centroid as 1D numpy array
+
+    Returns:
+        float: manhattan distance
+    """
     # Return the Manhattan distance between X and Y
     return np.sum(np.abs(X-Y))
 
 
 def fit_model(k, MAX_ITER):
+    """Fit the model with the data, and compute the centroids and assign data points to 
+    clusters for each choice of 'k' (cluster count)
+
+    Args:
+        k (integer): cluster count
+        MAX_ITER (integer): maximum number of iterations to run for updating centroids and 
+        clusters, before cluster convergence
+
+    Returns:
+        clusters (numpy array): array with the final centroids index value mapped to 
+        index of corresponding datapoint, after cluster convergence
+        centroids (numpy array): array with centroids, after cluster convergence
+    """
+    # set random seed
     np.random.seed(53)
     
     num_centroids = k
-    # print(f'k: {k}')
     # Initialise 'k' centroids (y1, .. yk) randomly from the data set
     centroids = data[np.random.randint(data.shape[0], size=num_centroids), :]
     # initialise 'clusters' to None
@@ -63,6 +104,16 @@ def fit_model(k, MAX_ITER):
 
 
 def group_data_to_cluster(centroids):
+    """Assigns each data points to their respective clusters, based on the shortest distance 
+    to centroid (based on the choice of clustering algorithm)
+
+    Args:
+        centroids (numpy array): current updated centroids
+
+    Returns:
+        clusters (numpy array): array with the updated closest centroids, index value 
+        mapped to index of corresponding datapoint
+    """
     num_centroids = len(centroids)
     num_datapoints = len(data)
     # Initialise 'clusters', to later store the centroid index value to the corresponding datapoint index
@@ -95,6 +146,17 @@ def group_data_to_cluster(centroids):
 
 
 def update_centroids(clusters, centroids):
+    """update the centroids using the current datapoint distribution in clusters 
+    (based on the choice of clustering algorithm)
+
+    Args:
+        clusters (numpy array): array with the current datapoint distribution,
+        with each centroid index value mapped to the respective data point index
+        centroids (numpy array): array with previous centroids
+
+    Returns:
+        centroids (numpy array): array with updated centroids
+    """
     num_centroids = len(centroids)
     # Iterate over the centroids, to update them based on the updated cluster data
     for centroid_index in range(num_centroids):
@@ -109,6 +171,16 @@ def update_centroids(clusters, centroids):
 
 
 def compute_metrics(clusters, category):
+    """Compute B-cubed metrics for the dataset
+
+    Args:
+        clusters (numpy array): array with the current datapoint distribution,
+        with each centroid index value mapped to the respective data point index
+        category (numpy array): array with category (true label) values for the dataset
+
+    Returns:
+        (floats): computed B-cubed metric scores
+    """
     num_datapoints = len(data)
     # initialise arrays for storing B-cubed metrics for each datapoint
     precision = np.zeros((num_datapoints))
@@ -137,12 +209,20 @@ def compute_metrics(clusters, category):
 
 
 def plot_metrics(precisions, recalls, f_scores):
+    """Plot the B-cubed metric scores for each choice of clustering algorithm
+
+    Args:
+        precisions (numpy array): precisions for dataset corresponding to each value of 'k'
+        recalls (numpy array): recalls for dataset corresponding to each value of 'k'
+        f_scores (numpy array): f_scores for dataset corresponding to each value of 'k'
+    """
+    # create an array of 'k' values for x-axis
     k_choices = np.arange(1,K_MAX+1)
     plt.plot(k_choices, precisions, label='precision')
     plt.plot(k_choices, recalls, label='recall')
     plt.plot(k_choices, f_scores, label='f_score')
     plt.xlabel('K')
-    plt.ylabel('Metrics')
+    plt.ylabel('B-CUBED metric scores')
     plt.xticks(np.arange(1,K_MAX+1))
     plt.legend()
     # Add annotations to the plot
@@ -166,21 +246,14 @@ if __name__ == '__main__':
     import matplotlib.pyplot as plt
     from copy import deepcopy
 
-    # SEED = np.random.randint(100)
-    # np.random.seed(53)
-    # print(SEED)
-    # 53, 40, 18
-
     MAX_ITER = 100
     K_MAX = 9
 
-    # ****** CHANGE PATH *******************
-
     # import data and convert them to numpy arrays
-    animals = pd.read_csv('CA2Data/animals', header=None, delimiter=' ').to_numpy()
-    countries = pd.read_csv('CA2Data/countries', header=None, delimiter=' ').to_numpy()
-    fruits = pd.read_csv('CA2Data/fruits', header=None, delimiter=' ').to_numpy()
-    veggies = pd.read_csv('CA2Data/veggies', header=None, delimiter=' ').to_numpy()
+    animals = pd.read_csv('animals', header=None, delimiter=' ').to_numpy()
+    countries = pd.read_csv('countries', header=None, delimiter=' ').to_numpy()
+    fruits = pd.read_csv('fruits', header=None, delimiter=' ').to_numpy()
+    veggies = pd.read_csv('veggies', header=None, delimiter=' ').to_numpy()
 
     # Assign numerical 'category' values corresponding to true labels
     animals[:,0] = 0
@@ -211,9 +284,12 @@ if __name__ == '__main__':
             k_means = True
             k_medians = False
             l2_len_norm = False
+
             # Check if l2 length normalisation required
             if l2_len_norm:
                 data = normalise_data(data)
+
+            # compute the clusters, centroids and B-cubed metric scores for each 'k' value, and finally plot them 
             for k in range(1, K_MAX+1):
                 clusters, centroids = fit_model(k, MAX_ITER)
                 precisions[k-1], recalls[k-1], f_scores[k-1] = compute_metrics(clusters, category)
@@ -226,9 +302,12 @@ if __name__ == '__main__':
             k_means = True
             k_medians = False
             l2_len_norm = True
+
             # Check if l2 length normalisation required
             if l2_len_norm:
-                data = normalise_data(data)               
+                data = normalise_data(data) 
+                
+            # compute the clusters, centroids and B-cubed metric scores for each 'k' value, and finally plot them 
             for k in range(1, K_MAX+1):
                 clusters, centroids = fit_model(k, MAX_ITER)
                 precisions[k-1], recalls[k-1], f_scores[k-1] = compute_metrics(clusters, category)
@@ -240,9 +319,12 @@ if __name__ == '__main__':
             k_means = False
             k_medians = True
             l2_len_norm = False
+
             # Check if l2 length normalisation required
             if l2_len_norm:
                 data = normalise_data(data)
+
+            # compute the clusters, centroids and B-cubed metric scores for each 'k' value, and finally plot them 
             for k in range(1, K_MAX+1):
                 clusters, centroids = fit_model(k, MAX_ITER)
                 precisions[k-1], recalls[k-1], f_scores[k-1] = compute_metrics(clusters, category)
@@ -254,9 +336,12 @@ if __name__ == '__main__':
             k_means = False
             k_medians = True
             l2_len_norm = True
+
             # Check if l2 length normalisation required
             if l2_len_norm:
                 data = normalise_data(data)
+
+            # compute the clusters, centroids and B-cubed metric scores for each 'k' value, and finally plot them 
             for k in range(1, K_MAX+1):
                 clusters, centroids = fit_model(k, MAX_ITER)
                 precisions[k-1], recalls[k-1], f_scores[k-1] = compute_metrics(clusters, category)
