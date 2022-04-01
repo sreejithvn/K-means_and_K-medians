@@ -1,3 +1,5 @@
+# Student Name:¬¬ Sreejith Vidyadharan
+# Student Id: 201602918
 
 """K-mean and K-medians clustering algorithms"""
 
